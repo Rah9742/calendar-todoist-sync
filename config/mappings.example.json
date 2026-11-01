@@ -1,0 +1,9 @@
+{
+  "timezone": "Europe/London",
+  "mappings": [
+    {
+      "googleCalendarId": "REPLACE_WITH_CALENDAR_ID",
+      "todoistProjectId": "REPLACE_WITH_PROJECT_ID"
+    }
+  ]
+}
