@@ -2,8 +2,14 @@
   "timezone": "Europe/London",
   "mappings": [
     {
-      "googleCalendarId": "REPLACE_WITH_CALENDAR_ID",
-      "todoistProjectId": "REPLACE_WITH_PROJECT_ID"
+      "id": "test",
+      "googleCalendarId": "REPLACE_WITH_DEDICATED_TEST_CALENDAR_ID",
+      "todoistProjectId": "REPLACE_WITH_DEDICATED_TEST_PROJECT_ID",
+      "deleteTasksOnGoogleDeletion": false,
+      "complexRecurrence": false,
+      "mappedMoves": false,
+      "deleteGoogleOnTaskDeletion": false,
+      "extendedRecurrence": false
     }
   ]
 }

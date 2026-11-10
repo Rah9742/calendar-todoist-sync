@@ -1,0 +1,36 @@
+{
+  "name": "calendar-todoist-sync",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "types": "node scripts/wrangler.mjs types",
+    "check": "npm run types && tsc --noEmit",
+    "status": "node scripts/status.mjs",
+    "review": "node scripts/review.mjs",
+    "usage": "node scripts/usage.mjs",
+    "test": "vitest run",
+    "dev": "node scripts/wrangler.mjs dev",
+    "deploy": "node scripts/wrangler.mjs deploy",
+    "build": "node scripts/wrangler.mjs build",
+    "authorize:google": "node scripts/authorize.mjs google",
+    "authorize:todoist": "node scripts/authorize.mjs todoist",
+    "format:check": "prettier --check src test scripts package.json package-lock.json tsconfig.json config/mappings.example.json wrangler.jsonc docs/*.md *.md .github",
+    "cf": "node scripts/wrangler.mjs cf",
+    "init:local": "node scripts/init-local.mjs",
+    "reconcile": "node scripts/reconcile.mjs",
+    "privacy:check": "node scripts/check-privacy.mjs --history"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261101.1",
+    "@types/node": "^26.6.6",
+    "jsonc-parser": "^3.3.1",
+    "miniflare": "^5.20261023.3-beta",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.156.0"
+  },
+  "engines": {
+    "node": ">=26"
+  }
+}

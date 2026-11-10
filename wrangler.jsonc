@@ -1,0 +1,82 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "calendar-todoist-sync",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "vars": {
+    "SYNC_ENABLED": "false",
+    "PUBLIC_URL": "https://calendar-todoist-sync.YOUR_SUBDOMAIN.workers.dev",
+    "COMPLETION_MODE": "retain",
+    "DEFAULT_DURATION_MINUTES": "30",
+    "HORIZON_DAYS": "90",
+    "TODOIST_TOKEN_MODE": "rotating",
+    "CF_ACCOUNT_ID": "00000000000000000000000000000000",
+    "TOKEN_STORE_ID": "00000000000000000000000000000000",
+    "TODOIST_TOKEN_SECRET_ID": "00000000000000000000000000000000",
+    "EMAIL_ALERTS": "false",
+    "ALERT_EMAIL": "you@example.com",
+    "IMPORT_START": "",
+    "IMPORT_END": "",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "calendar-todoist-sync",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "JOBS",
+        "queue": "calendar-todoist-sync",
+      },
+    ],
+    "consumers": [
+      {
+        "queue": "calendar-todoist-sync",
+        "max_batch_size": 1,
+        "max_batch_timeout": 0,
+        "max_concurrency": 1,
+        "max_retries": 8,
+        "dead_letter_queue": "calendar-todoist-sync-dlq",
+      },
+    ],
+  },
+  "triggers": {
+    "crons": ["*/15 * * * *"],
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1,
+    },
+  },
+  "secrets_store_secrets": [
+    {
+      "binding": "TODOIST_TOKENS",
+      "store_id": "00000000000000000000000000000000",
+      "secret_name": "calendar-todoist-sync-tokens",
+    },
+  ],
+  "account_id": "00000000000000000000000000000000",
+  "secrets": {
+    "required": [
+      "MAPPINGS_JSON",
+      "ADMIN_TOKEN",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+      "GOOGLE_REFRESH_TOKEN",
+      "GOOGLE_CHANNEL_SECRET",
+      "TODOIST_CLIENT_ID",
+      "TODOIST_CLIENT_SECRET",
+      "TODOIST_USER_ID",
+      "CF_SECRET_STORE_TOKEN",
+    ],
+  },
+}

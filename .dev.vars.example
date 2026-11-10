@@ -1,0 +1,12 @@
+# Local only. Production values belong in Cloudflare Worker secrets.
+ADMIN_TOKEN=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REFRESH_TOKEN=
+GOOGLE_CHANNEL_SECRET=
+TODOIST_ACCESS_TOKEN=
+TODOIST_CLIENT_SECRET=
+TODOIST_USER_ID=
+TODOIST_CLIENT_ID=
+# Account-scoped token with Secrets Store Write only, for rotating OAuth tokens.
+CF_SECRET_STORE_TOKEN=

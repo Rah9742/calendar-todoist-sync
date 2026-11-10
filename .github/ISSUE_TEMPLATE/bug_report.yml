@@ -1,0 +1,19 @@
+name: Bug report
+description: Report a reproducible sync problem without sharing personal data.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Please use synthetic calendar/task details. Never attach credentials, OAuth URLs, private configs, database exports or raw logs. For vulnerabilities, use private reporting instead."
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Source action, expected counterpart, actual outcome, timezone, recurrence rule and other integrations writing these items.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics
+      description: Version/commit and aggregate status/error codes. Remove identifiers and private titles.
