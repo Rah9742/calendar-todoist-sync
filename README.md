@@ -113,6 +113,6 @@ D1 contains task/event content snapshots and recovery metadata; it must be treat
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports should use synthetic examples and redacted status output. Never attach `.dev.vars`, private configuration, database exports, OAuth callback URLs or raw request logs.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [release checklist](docs/RELEASE.md). Bug reports should use synthetic examples and redacted status output. Never attach `.dev.vars`, private configuration, database exports, OAuth callback URLs or raw request logs.
 
 Official references: [Google push notifications](https://developers.google.com/workspace/calendar/api/guides/push), [Google incremental sync](https://developers.google.com/workspace/calendar/api/guides/sync), [Todoist API](https://developer.todoist.com/api/v1/), [Cloudflare Workers](https://developers.cloudflare.com/workers/), [Queues pricing](https://developers.cloudflare.com/queues/platform/pricing/).
