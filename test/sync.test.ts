@@ -360,6 +360,7 @@ beforeEach(async () => {
   sync = new Sync(env, mapping, "test-token");
 });
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -2816,9 +2817,9 @@ describe("reopening recurring tasks without Google writes", () => {
     },
   );
   it("reactivates a known rolling occurrence and reuses its parked next event after re-completion", async () => {
-    const clock = vi
-      .spyOn(Date, "now")
-      .mockReturnValue(Date.parse("2026-11-10T10:00:00Z"));
+    // Keep constructor timestamps and Date.now aligned across simulated actions.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-10T10:00:00Z"));
     const s = new Sync(
       { ...env, COMPLETION_MODE: "retain" },
       { ...mapping, complexRecurrence: true },
@@ -2831,7 +2832,7 @@ describe("reopening recurring tasks without Google writes", () => {
     tasks.set(t.id, t);
     await s.task(t.id);
     const original = [...events.keys()][0];
-    clock.mockReturnValue(Date.parse("2026-11-10T10:02:00Z"));
+    vi.setSystemTime(new Date("2026-11-10T10:02:00Z"));
     activities = [
       {
         id: "first",
@@ -2843,7 +2844,7 @@ describe("reopening recurring tasks without Google writes", () => {
     tasks.set(t.id, { ...t, due: { ...t.due, date: "2026-12-31" } });
     await s.task(t.id);
     const google = JSON.stringify([...events]);
-    clock.mockReturnValue(Date.parse("2026-11-10T10:03:00Z"));
+    vi.setSystemTime(new Date("2026-11-10T10:03:00Z"));
     tasks.set(t.id, t);
     await s.task(t.id, false, undefined, true);
     expect(JSON.stringify([...events])).toBe(google);
@@ -2852,7 +2853,7 @@ describe("reopening recurring tasks without Google writes", () => {
         .bind(t.id)
         .first(),
     ).toEqual({ event_id: original });
-    clock.mockReturnValue(Date.parse("2026-11-10T10:05:00Z"));
+    vi.setSystemTime(new Date("2026-11-10T10:05:00Z"));
     activities.push({
       id: "redo",
       event_type: "completed",
@@ -2863,6 +2864,5 @@ describe("reopening recurring tasks without Google writes", () => {
     await s.task(t.id);
     expect(JSON.stringify([...events])).toBe(google);
     expect(events.size).toBe(2);
-    clock.mockRestore();
   });
 });
