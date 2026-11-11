@@ -87,7 +87,9 @@ The helper requests Calendar event access, calendar-list read access and offline
 
 External Google apps in Testing can have short-lived refresh authorization. For unattended personal use, review Google's current [token-expiry rules](https://developers.google.com/identity/protocols/oauth2#expiration) and app publishing/verification requirements. Production publication and public verification are different. This project does not bypass provider consent or verification requirements.
 
-Optional alerts require Gmail API and the additional `gmail.send` scope. Set `EMAIL_ALERTS=true`, configure your private `ALERT_EMAIL`, then run `node scripts/authorize.mjs google --email`. No mailbox-reading permission is requested. Complete provider security/consent screens yourself where required.
+Optional alerts require Gmail API and the additional `gmail.send` scope. Set `EMAIL_ALERTS=true`, configure your private `ALERT_EMAIL` (recipient) and `ALERT_FROM` (the authorized Gmail sender), then run `node scripts/authorize.mjs google --email`. No mailbox-reading permission is requested. Complete provider security/consent screens yourself where required.
+
+For filtering, the recipient can be a Gmail plus alias such as `you+todoist@gmail.com`; keep `ALERT_FROM=you@gmail.com`. No separate plus-address account is needed. Alerts use basic mapping/status summaries, with a 30-minute persistence window and at most one problem email per 24 hours. A recovery email requires 30 minutes of clear status. Before deploying upgrades, apply the D1 migrations, including `0008_notification_health.sql`, so the debounce and daily budget survive restarts.
 
 ## 5. Register and authorize Todoist
 

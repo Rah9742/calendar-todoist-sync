@@ -26,6 +26,7 @@ A single Queue consumer serializes writes and rotating-token refresh. Jobs carry
 | `series.planning` / `converting` / `ready` / `deleting` | Journaled native-to-occurrence conversion and projection                                  |
 | `operations`                                            | Stable move/split/detach request identity and recovery payload                            |
 | `rolling_advances`                                      | Completion activity → deterministic next-event plan, committed once                       |
+| `notification_health`                                   | Observed health stability and problem-email budget retained across recoveries             |
 | `notifications`                                         | Delivery attempt, fingerprint, cooldown and uncertain/sent state                          |
 
 Read migrations for exact schema; resource data is private, not fixture data for contributors. D1 batches commit related link/journal transitions together. Provider writes and D1 cannot form a distributed transaction, so each recovery path must recognize already-applied external writes.

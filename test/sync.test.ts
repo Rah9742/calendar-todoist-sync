@@ -345,6 +345,7 @@ beforeEach(async () => {
       "series",
       "operations",
       "notifications",
+      "notification_health",
       "rolling_advances",
     ].map((table) => env.DB.prepare(`DELETE FROM ${table}`)),
   );
@@ -2440,7 +2441,7 @@ describe("private email failure notifications", () => {
     await notify(settings());
     expect(mail()).toHaveLength(0);
     await env.DB.prepare("UPDATE job_failures SET first_failed=?")
-      .bind(Date.now() - 16 * 60000)
+      .bind(Date.now() - 31 * 60000)
       .run();
     await notify(settings());
     await notify(settings());
@@ -2468,6 +2469,10 @@ describe("private email failure notifications", () => {
         return upstream(input, init);
       }),
     );
+    await notify(settings());
+    await env.DB.prepare("UPDATE notification_health SET since=?")
+      .bind(Date.now() - 31 * 60000)
+      .run();
     await expect(notify(settings())).rejects.toThrow();
     await notify(settings());
     expect(calls).toBe(1);
@@ -2476,6 +2481,124 @@ describe("private email failure notifications", () => {
         "SELECT state FROM notifications WHERE id='email'",
       ).first(),
     ).toEqual({ state: "uncertain" });
+  });
+  it("keeps short retry/recovery cycles silent and preserves the daily budget across recovery", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-11T10:00:00Z"));
+    provider();
+    await healthy();
+    const tick = (minutes: number) =>
+      vi.setSystemTime(Date.now() + minutes * 60000);
+    const fail = async (id: string) =>
+      recordFailure(
+        env,
+        id,
+        { kind: "google", mapping: mapping.id },
+        new ApiError(429),
+        1,
+        30,
+      );
+    const clear = async (id: string) =>
+      recordSuccess(env, id, { kind: "google", mapping: mapping.id }, true);
+    for (let i = 0; i < 3; i++) {
+      await fail("transient");
+      tick(16);
+      await notify(settings());
+      await clear("transient");
+      await notify(settings());
+      tick(31);
+      await notify(settings());
+    }
+    expect(mail()).toHaveLength(0);
+    await fail("persistent");
+    tick(31);
+    await notify(settings());
+    expect(mail()).toHaveLength(1);
+    await clear("persistent");
+    await notify(settings());
+    tick(30);
+    await notify(settings());
+    expect(mail()).toHaveLength(2);
+    await fail("again");
+    tick(31);
+    await notify(settings());
+    expect(mail()).toHaveLength(2);
+    // Changed problem counts and categories cannot bypass the daily limit.
+    await fail("another");
+    tick(31);
+    await notify(settings());
+    expect(mail()).toHaveLength(2);
+    tick(24 * 60);
+    await notify(settings());
+    await notify(settings());
+    expect(mail()).toHaveLength(3);
+  });
+  it("sends basic explanations to a plus alias using the configured sender", async () => {
+    provider();
+    await healthy();
+    await recordFailure(
+      env,
+      "private-task",
+      { kind: "google", mapping: mapping.id },
+      new ApiError(503),
+      2,
+      30,
+    );
+    await env.DB.prepare("UPDATE job_failures SET first_failed=?")
+      .bind(Date.now() - 31 * 60000)
+      .run();
+    await notify({
+      ...settings(),
+      ALERT_EMAIL: "owner+todoist@example.com",
+      ALERT_FROM: "owner@example.com",
+    });
+    const mime = Buffer.from(
+      String(mail()[0].body.raw),
+      "base64url",
+    ).toString();
+    expect(mime).toContain("From: owner@example.com");
+    expect(mime).toContain("To: owner+todoist@example.com");
+    const plain = Buffer.from(
+      mime
+        .split("Content-Transfer-Encoding: base64\r\n\r\n")[1]
+        .split("\r\n")[0],
+      "base64",
+    ).toString();
+    expect(plain).toContain("Some updates are still failing");
+    expect(plain).toContain("provider HTTP 503");
+    expect(plain).toContain("retrying automatically");
+    expect(plain).not.toMatch(/private-task|Ask Codex|unresolved_job_failures/);
+    await expect(
+      notify(
+        { ...settings(), ALERT_FROM: "a@example.com\r\nBcc:other@example.com" },
+        true,
+      ),
+    ).rejects.toThrow("configure_alert_email");
+  });
+  it("does not let an old retired mapping failure promote a new active retry", async () => {
+    provider();
+    await healthy();
+    await recordFailure(
+      env,
+      "old",
+      { kind: "google", mapping: "retired" },
+      new ApiError(404),
+      5,
+      30,
+    );
+    await env.DB.prepare("UPDATE job_failures SET first_failed=?")
+      .bind(Date.now() - 86400000)
+      .run();
+    await recordFailure(
+      env,
+      "new",
+      { kind: "google", mapping: mapping.id },
+      new ApiError(503),
+      1,
+      30,
+    );
+    await notify(settings());
+    expect(mail()).toHaveLength(0);
   });
   it("rejects header injection and never sends while disabled", async () => {
     provider();
@@ -2733,7 +2856,9 @@ it("never treats a completed task's active-endpoint 404 as Google deletion", asy
   expect((await state())?.state).toBe("active");
 });
 
-it("emails recovery promptly after a delivered failure notice without repeating healthy messages", async () => {
+it("emails recovery only after stable health following a delivered failure notice", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-11T10:00:00Z"));
   const e = { ...env, EMAIL_ALERTS: "true", ALERT_EMAIL: "owner@example.com" };
   let mail = 0;
   vi.stubGlobal(
@@ -2747,6 +2872,9 @@ it("emails recovery promptly after a delivered failure notice without repeating 
     }),
   );
   await notify(e);
+  expect(mail).toBe(0);
+  vi.setSystemTime(Date.now() + 31 * 60000);
+  await notify(e);
   expect(mail).toBe(1);
   await env.DB.prepare(
     "INSERT INTO channels(id,mapping,resource_id,expires) VALUES('watch',?,'registered',?)",
@@ -2755,6 +2883,9 @@ it("emails recovery promptly after a delivered failure notice without repeating 
     .run();
   for (const kind of ["google", "window", "tasks", "links"] as const)
     await recordSuccess(e, kind, { kind, mapping: mapping.id }, true);
+  await notify(e);
+  expect(mail).toBe(1);
+  vi.setSystemTime(Date.now() + 30 * 60000);
   await notify(e);
   await notify(e);
   expect(mail).toBe(2);

@@ -17,6 +17,7 @@
     "TODOIST_TOKEN_SECRET_ID": "00000000000000000000000000000000",
     "EMAIL_ALERTS": "false",
     "ALERT_EMAIL": "you@example.com",
+    "ALERT_FROM": "you@example.com",
     "IMPORT_START": "",
     "IMPORT_END": "",
   },

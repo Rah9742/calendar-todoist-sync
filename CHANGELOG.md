@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Debounce transient alert/recovery cycles, exclude retired mappings from failure thresholds, and retain a daily problem-email limit across recoveries.
+- Send concise, actionable email summaries and support separate sender/recipient addresses for plus-alias filtering.
+
 - Webhook-driven, explicitly mapped Google Calendar ↔ Todoist sync on Cloudflare.
 - Native and occurrence-based recurrence, retained completed history, ordered completion recovery and reopening support.
 - Opt-in deletion/move propagation, durable retry journals, conflict holds and rolling discovery.
